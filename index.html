@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>חלוקת פריטים לברביקיו 🔥</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --f0-bg: #f3f2ef; --f0-border: #c9c7c2; --f0-text: #555;
+      --f1-bg: #dbeafe; --f1-border: #3b82f6; --f1-text: #1e3a8a;
+      --f2-bg: #d1fae5; --f2-border: #10b981; --f2-text: #064e3b;
+      --f3-bg: #fef3c7; --f3-border: #f59e0b; --f3-text: #78350f;
+      --f4-bg: #ede9fe; --f4-border: #8b5cf6; --f4-text: #4c1d95;
+      --bg: #f0ede8;
+      --card: #ffffff;
+      --border: #dedad4;
+      --text: #1a1a1a;
+      --text-muted: #6b6b6b;
+      --text-faint: #aaa;
+      --radius: 10px;
+      --radius-sm: 7px;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      direction: rtl;
+    }
+
+    .page { padding: 1.25rem 1.25rem 4rem; }
+
+    .header { margin-bottom: 1rem; }
+    .header h1 { font-size: 1.35rem; font-weight: 700; }
+    .header p { font-size: 0.82rem; color: var(--text-muted); margin-top: 3px; }
+
+    .topbar {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 1rem; flex-wrap: wrap;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex; gap: 3px; background: #dedad4;
+      border-radius: var(--radius-sm); padding: 3px; width: fit-content;
+    }
+    .tab {
+      padding: 5px 16px; border-radius: 6px; font-size: 0.82rem;
+      cursor: pointer; border: none; background: transparent;
+      color: var(--text-muted); font-family: inherit;
+    }
+    .tab.active {
+      background: var(--card); color: var(--text);
+      font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    /* Sync */
+    .sync-bar { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text-muted); margin-right: auto; }
+    .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #10b981; transition: background .3s; }
+    .sync-dot.syncing { background: #f59e0b; }
+    .sync-dot.error   { background: #ef4444; }
+
+    .copy-btn {
+      padding: 6px 14px; border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border); background: var(--card);
+      font-size: 0.82rem; cursor: pointer; font-family: inherit;
+      font-weight: 600; white-space: nowrap; transition: background .15s;
+    }
+    .copy-btn:hover { background: #e8e5e0; }
+
+    /* Board */
+    .board-wrap {
+      overflow-x: auto; padding-bottom: 1rem;
+      scrollbar-width: thin; scrollbar-color: #ccc transparent;
+    }
+    .board { display: flex; gap: 10px; min-width: max-content; align-items: flex-start; }
+
+    /* Column */
+    .col {
+      width: 175px; border-radius: var(--radius); background: var(--card);
+      border: 1.5px solid var(--border);
+      display: flex; flex-direction: column; min-height: 300px;
+      transition: border-color .15s, background .15s; flex-shrink: 0;
+    }
+    .col.drag-over { border-style: dashed; }
+    .col.f0.drag-over { background: #eceae6; border-color: var(--f0-border); }
+    .col.f1.drag-over { background: #eff6ff; border-color: var(--f1-border); }
+    .col.f2.drag-over { background: #ecfdf5; border-color: var(--f2-border); }
+    .col.f3.drag-over { background: #fffbeb; border-color: var(--f3-border); }
+    .col.f4.drag-over { background: #f5f3ff; border-color: var(--f4-border); }
+
+    .col.f0 { border-color: var(--f0-border); }
+    .col.f1 { border-color: var(--f1-border); }
+    .col.f2 { border-color: var(--f2-border); }
+    .col.f3 { border-color: var(--f3-border); }
+    .col.f4 { border-color: var(--f4-border); }
+
+    .col-header {
+      padding: 10px 12px 8px; border-bottom: 1.5px solid var(--border);
+      border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;
+    }
+    .col.f0 .col-header { background: var(--f0-bg); }
+    .col.f1 .col-header { background: var(--f1-bg); }
+    .col.f2 .col-header { background: var(--f2-bg); }
+    .col.f3 .col-header { background: var(--f3-bg); }
+    .col.f4 .col-header { background: var(--f4-bg); }
+
+    .col-name { font-size: 0.82rem; font-weight: 700; line-height: 1.3; margin-bottom: 2px; }
+    .col.f0 .col-name { color: var(--f0-text); }
+    .col.f1 .col-name { color: var(--f1-text); }
+    .col.f2 .col-name { color: var(--f2-text); }
+    .col.f3 .col-name { color: var(--f3-text); }
+    .col.f4 .col-name { color: var(--f4-text); }
+    .col-count { font-size: 0.7rem; opacity: .6; }
+
+    .col-body { padding: 8px; display: flex; flex-direction: column; flex: 1; }
+
+    .cat-label-small {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; color: var(--text-faint);
+      margin: 6px 0 4px 0; padding-right: 2px;
+    }
+    .cat-label-small:first-child { margin-top: 0; }
+
+    /* Item card */
+    .item-card {
+      padding: 7px 10px; border-radius: 8px;
+      font-size: 0.82rem; font-weight: 500;
+      cursor: grab; border: 1px solid transparent;
+      margin-bottom: 5px; user-select: none;
+      transition: box-shadow .15s, transform .1s, opacity .15s;
+    }
+    .item-card:hover { box-shadow: 0 2px 6px rgba(0,0,0,.1); transform: translateY(-1px); }
+    .item-card:active { cursor: grabbing; }
+    .item-card.dragging { opacity: .35; transform: scale(.96); box-shadow: none; }
+
+    .col.f0 .item-card { background: #eceae6; border-color: #d5d2cc; color: #444; }
+    .col.f1 .item-card { background: var(--f1-bg); border-color: #93c5fd; color: var(--f1-text); }
+    .col.f2 .item-card { background: var(--f2-bg); border-color: #6ee7b7; color: var(--f2-text); }
+    .col.f3 .item-card { background: var(--f3-bg); border-color: #fcd34d; color: var(--f3-text); }
+    .col.f4 .item-card { background: var(--f4-bg); border-color: #c4b5fd; color: var(--f4-text); }
+
+    .col-empty {
+      font-size: .75rem; color: var(--text-faint);
+      padding: 10px 4px; line-height: 1.5; text-align: center;
+    }
+
+    /* Edit tab */
+    .edit-section { max-width: 600px; }
+    .section-label { font-size: .7rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 8px; margin-top: 1.25rem; }
+    .input-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .input-row input, .input-row select {
+      padding: 8px 12px; border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border); background: var(--card);
+      font-size: .875rem; color: var(--text); font-family: inherit; direction: rtl;
+    }
+    .input-row input:focus, .input-row select:focus { outline: none; border-color: #888; }
+    .btn {
+      padding: 8px 16px; border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border); background: var(--card);
+      font-size: .875rem; cursor: pointer; color: var(--text);
+      font-family: inherit; font-weight: 600; transition: background .15s; white-space: nowrap;
+    }
+    .btn:hover { background: #e8e5e0; }
+    .btn.primary { background: var(--text); color: white; border-color: var(--text); }
+    .btn.primary:hover { opacity: .85; }
+    .edit-item {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 11px; border-radius: 100px;
+      border: 1.5px solid var(--border); background: var(--card);
+      font-size: .82rem; margin: 3px;
+    }
+    .rename-btn { cursor: pointer; color: var(--text-muted); font-size: .72rem; text-decoration: underline; background: none; border: none; font-family: inherit; padding: 0; }
+    .rename-btn:hover { color: var(--text); }
+    .del-btn { cursor: pointer; color: var(--text-faint); font-size: .72rem; background: none; border: none; font-family: inherit; padding: 0; line-height: 1; }
+    .del-btn:hover { color: #ef4444; }
+    .cat-block-edit { margin-bottom: 1.25rem; }
+    .cat-name-edit { font-size: .75rem; color: var(--text-faint); font-weight: 600; margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>🔥 חלוקת פריטים לברביקיו</h1>
+    <p>גררו פריטים לעמודה של המשפחה המתאימה — השינויים מסונכרנים לכולם</p>
+  </div>
+
+  <div class="topbar">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('assign')">שיוך פריטים</button>
+      <button class="tab"        onclick="switchTab('edit')">עריכת פריטים</button>
+    </div>
+    <div class="sync-bar">
+      <span class="sync-dot" id="sync-dot"></span>
+      <span id="sync-label">מסנכרן...</span>
+    </div>
+    <button class="copy-btn" id="copy-btn" onclick="copySummary()" style="display:none;">העתק לווצאפ</button>
+  </div>
+
+  <!-- ASSIGN TAB -->
+  <div id="tab-assign">
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+    </div>
+  </div>
+
+  <!-- EDIT TAB -->
+  <div id="tab-edit" style="display:none;">
+    <div class="edit-section">
+      <div class="section-label">הוספת פריט חדש</div>
+      <div class="input-row">
+        <input type="text" id="new-item-name" placeholder="שם הפריט..." style="width:160px;" />
+        <select id="new-item-cat"></select>
+        <button class="btn primary" onclick="addItem()">+ הוסף</button>
+      </div>
+      <div class="section-label">כל הפריטים</div>
+      <div id="edit-items"></div>
+    </div>
+  </div>
+
+</div>
+<script>
+const FAMILIES = [
+  { name: null,             label: 'לא משוייך',    cls: 'f0' },
+  { name: 'יוסי ואודיה',   label: 'יוסי ואודיה',  cls: 'f1' },
+  { name: 'עירן ואביבית',  label: 'עירן ואביבית', cls: 'f2' },
+  { name: 'אושרית ויעקב',  label: 'אושרית ויעקב', cls: 'f3' },
+  { name: 'שי ולירן',      label: 'שי ולירן',      cls: 'f4' },
+];
+const CAT_ORDER = ['חד פעמי','אוכל','תבלינים','שתייה','ציוד','ריהוט'];
+
+let state = { items: [], assignments: {} };
+let currentTab = 'assign';
+let isSaving = false;
+let draggedItem = null;
+
+// API
+async function api(method, path, body) {
+  const res = await fetch('/api' + path, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+function setSyncStatus(s) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'sync-dot' + (s === 'syncing' ? ' syncing' : s === 'error' ? ' error' : '');
+  lbl.textContent = s === 'syncing' ? 'מסנכרן...' : s === 'error' ? 'שגיאת חיבור' : 'מסונכרן ✓';
+}
+
+async function fetchState() {
+  if (isSaving) return;
+  setSyncStatus('syncing');
+  try {
+    state = await api('GET', '/state');
+    setSyncStatus('ok');
+    renderAll();
+  } catch { setSyncStatus('error'); }
+}
+
+async function assignItem(itemName, familyName) {
+  isSaving = true;
+  setSyncStatus('syncing');
+  try {
+    if (familyName === null) {
+      await api('DELETE', '/assign/' + encodeURIComponent(itemName));
+    } else {
+      await api('POST', '/assign', { item_name: itemName, family_name: familyName });
+    }
+    setSyncStatus('ok');
+  } catch { setSyncStatus('error'); }
+  finally { isSaving = false; }
+}
+
+// Drag & Drop
+function onDragStart(e, itemName) {
+  draggedItem = itemName;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', itemName);
+  setTimeout(() => {
+    document.querySelectorAll(`.item-card[data-item="${itemName.replace(/"/g, '\\"')}"]`)
+      .forEach(el => el.classList.add('dragging'));
+  }, 0);
+}
+
+function onDragEnd() {
+  document.querySelectorAll('.item-card.dragging').forEach(el => el.classList.remove('dragging'));
+  document.querySelectorAll('.col.drag-over').forEach(el => el.classList.remove('drag-over'));
+  draggedItem = null;
+}
+
+function onDragOver(e, colEl) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.col.drag-over').forEach(el => { if (el !== colEl) el.classList.remove('drag-over'); });
+  colEl.classList.add('drag-over');
+}
+
+function onDragLeave(e, colEl) {
+  if (!colEl.contains(e.relatedTarget)) colEl.classList.remove('drag-over');
+}
+
+function onDrop(e, familyName) {
+  e.preventDefault();
+  const itemName = e.dataTransfer.getData('text/plain') || draggedItem;
+  e.currentTarget.classList.remove('drag-over');
+  if (!itemName) return;
+  const current = state.assignments[itemName] || null;
+  if (current === familyName) return;
+  // Optimistic update
+  if (familyName === null) delete state.assignments[itemName];
+  else state.assignments[itemName] = familyName;
+  renderBoard();
+  updateCopyBtn();
+  assignItem(itemName, familyName);
+}
+
+// Touch drag (mobile)
+let touchItem = null, touchClone = null, touchOffX = 0, touchOffY = 0;
+
+function onTouchStart(e, itemName) {
+  touchItem = itemName;
+  const el = e.currentTarget;
+  const rect = el.getBoundingClientRect();
+  touchOffX = e.touches[0].clientX - rect.left;
+  touchOffY = e.touches[0].clientY - rect.top;
+  touchClone = el.cloneNode(true);
+  touchClone.style.cssText = `position:fixed;z-index:9999;pointer-events:none;opacity:.8;width:${rect.width}px;left:${e.touches[0].clientX - touchOffX}px;top:${e.touches[0].clientY - touchOffY}px;`;
+  document.body.appendChild(touchClone);
+  el.classList.add('dragging');
+}
+
+function onTouchMove(e) {
+  if (!touchItem) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  if (touchClone) {
+    touchClone.style.left = (touch.clientX - touchOffX) + 'px';
+    touchClone.style.top  = (touch.clientY - touchOffY) + 'px';
+  }
+  document.querySelectorAll('.col.drag-over').forEach(el => el.classList.remove('drag-over'));
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  const col = el && el.closest('.col');
+  if (col) col.classList.add('drag-over');
+}
+
+function onTouchEnd(e) {
+  if (!touchItem) return;
+  const touch = e.changedTouches[0];
+  document.querySelectorAll('.col.drag-over').forEach(el => el.classList.remove('drag-over'));
+  document.querySelectorAll('.item-card.dragging').forEach(el => el.classList.remove('dragging'));
+  if (touchClone) { touchClone.remove(); touchClone = null; }
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  const col = el && el.closest('.col');
+  if (col) {
+    const raw = col.dataset.family;
+    const familyName = raw === 'null' ? null : raw;
+    const current = state.assignments[touchItem] || null;
+    if (familyName !== current) {
+      if (familyName === null) delete state.assignments[touchItem];
+      else state.assignments[touchItem] = familyName;
+      renderBoard();
+      updateCopyBtn();
+      assignItem(touchItem, familyName);
+    }
+  }
+  touchItem = null;
+}
+
+// Board render
+function renderBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+
+  FAMILIES.forEach(f => {
+    const fItems = state.items.filter(i => (state.assignments[i.name] || null) === f.name);
+
+    const col = document.createElement('div');
+    col.className = `col ${f.cls}`;
+    col.dataset.family = String(f.name);
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'col-header';
+    header.innerHTML = `<div class="col-name">${f.label}</div><div class="col-count">${fItems.length} פריטים</div>`;
+    col.appendChild(header);
+
+    // Body
+    const body = document.createElement('div');
+    body.className = 'col-body';
+
+    if (fItems.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'col-empty';
+      empty.textContent = f.name === null ? 'כל הפריטים שויכו 🎉' : 'גרור פריטים לכאן';
+      body.appendChild(empty);
+    } else {
+      // Group by category
+      const catMap = {};
+      CAT_ORDER.forEach(c => { catMap[c] = []; });
+      fItems.forEach(item => {
+        if (!catMap[item.category]) catMap[item.category] = [];
+        catMap[item.category].push(item);
+      });
+
+      const activeCats = [...CAT_ORDER, ...Object.keys(catMap).filter(c => !CAT_ORDER.includes(c))]
+        .filter(c => catMap[c] && catMap[c].length);
+      const showCatLabels = activeCats.length > 1;
+
+      activeCats.forEach(cat => {
+        if (showCatLabels) {
+          const lbl = document.createElement('div');
+          lbl.className = 'cat-label-small';
+          lbl.textContent = cat;
+          body.appendChild(lbl);
+        }
+        catMap[cat].forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'item-card';
+          card.textContent = item.name;
+          card.dataset.item = item.name;
+          card.draggable = true;
+          card.addEventListener('dragstart', e => onDragStart(e, item.name));
+          card.addEventListener('dragend', onDragEnd);
+          card.addEventListener('touchstart', e => onTouchStart(e, item.name), { passive: true });
+          card.addEventListener('touchmove', onTouchMove, { passive: false });
+          card.addEventListener('touchend', onTouchEnd);
+          body.appendChild(card);
+        });
+      });
+    }
+
+    col.appendChild(body);
+    col.addEventListener('dragover',  e => onDragOver(e, col));
+    col.addEventListener('dragleave', e => onDragLeave(e, col));
+    col.addEventListener('drop',      e => onDrop(e, f.name));
+    board.appendChild(col);
+  });
+}
+
+// Edit tab
+function renderEditItems() {
+  const container = document.getElementById('edit-items');
+  container.innerHTML = '';
+  const groups = {};
+  CAT_ORDER.forEach(c => { groups[c] = []; });
+  state.items.forEach(item => {
+    if (!groups[item.category]) groups[item.category] = [];
+    groups[item.category].push(item);
+  });
+  Object.entries(groups).forEach(([cat, items]) => {
+    const block = document.createElement('div');
+    block.className = 'cat-block-edit';
+    block.innerHTML = `<div class="cat-name-edit">${cat}</div>`;
+    const row = document.createElement('div');
+    items.forEach(item => {
+      const el = document.createElement('span');
+      el.className = 'edit-item';
+      const sname = item.name.replace(/'/g, "\\'");
+      el.innerHTML = `${item.name}
+        <button class="rename-btn" onclick="renameItem('${sname}')">שנה שם</button>
+        <button class="del-btn"    onclick="deleteItem('${sname}')">✕</button>`;
+      row.appendChild(el);
+    });
+    if (!items.length) {
+      const e = document.createElement('span');
+      e.style.cssText = 'font-size:.78rem;color:var(--text-faint);';
+      e.textContent = 'אין פריטים';
+      row.appendChild(e);
+    }
+    block.appendChild(row);
+    container.appendChild(block);
+  });
+}
+
+function renderCatSelect() {
+  const sel = document.getElementById('new-item-cat');
+  const used = [...new Set(state.items.map(i => i.category))];
+  const cats = [...new Set([...CAT_ORDER, ...used])];
+  sel.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+async function addItem() {
+  const nameEl = document.getElementById('new-item-name');
+  const catEl  = document.getElementById('new-item-cat');
+  const name = nameEl.value.trim();
+  const category = catEl.value;
+  if (!name || !category) return;
+  if (state.items.find(i => i.name === name)) {
+    nameEl.style.borderColor = '#ef4444';
+    setTimeout(() => nameEl.style.borderColor = '', 1000);
+    return;
+  }
+  try { await api('POST', '/items', { name, category }); nameEl.value = ''; await fetchState(); }
+  catch { alert('שגיאה בהוספת פריט'); }
+}
+
+async function deleteItem(name) {
+  if (!confirm(`למחוק את "${name}"?`)) return;
+  try { await api('DELETE', '/items/' + encodeURIComponent(name)); await fetchState(); }
+  catch { alert('שגיאה במחיקה'); }
+}
+
+async function renameItem(oldName) {
+  const newName = prompt('שם חדש לפריט:', oldName);
+  if (!newName || newName.trim() === oldName) return;
+  try { await api('PUT', '/items/' + encodeURIComponent(oldName), { name: newName.trim() }); await fetchState(); }
+  catch { alert('שגיאה בשינוי שם'); }
+}
+
+function updateCopyBtn() {
+  const hasAny = FAMILIES.slice(1).some(f => state.items.some(i => state.assignments[i.name] === f.name));
+  document.getElementById('copy-btn').style.display = hasAny ? '' : 'none';
+}
+
+function copySummary() {
+  let text = '🔥 חלוקת פריטים לברביקיו\n\n';
+  FAMILIES.slice(1).forEach(f => {
+    const fItems = state.items.filter(i => state.assignments[i.name] === f.name);
+    text += `*${f.label}:*\n${fItems.length ? fItems.map(i => `  • ${i.name}`).join('\n') : '  (לא שויך עדיין)'}\n\n`;
+  });
+  const unassigned = state.items.filter(i => !state.assignments[i.name]);
+  if (unassigned.length) text += `*לא משוייך:* ${unassigned.map(i => i.name).join(', ')}`;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'הועתק! ✓';
+    setTimeout(() => btn.textContent = 'העתק לווצאפ', 2000);
+  });
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-assign').style.display = tab === 'assign' ? '' : 'none';
+  document.getElementById('tab-edit').style.display   = tab === 'edit'   ? '' : 'none';
+  document.querySelectorAll('.tab').forEach((t, i) =>
+    t.classList.toggle('active', (i===0&&tab==='assign')||(i===1&&tab==='edit')));
+  renderAll();
+}
+
+function renderAll() {
+  if (currentTab === 'assign') { renderBoard(); updateCopyBtn(); }
+  else { renderEditItems(); renderCatSelect(); }
+}
+
+document.addEventListener('touchmove', e => { if (touchItem) e.preventDefault(); }, { passive: false });
+document.getElementById('new-item-name').addEventListener('keydown', e => { if (e.key === 'Enter') addItem(); });
+
+fetchState();
+setInterval(fetchState, 3000);
+</script>
+</body>
+</html>
